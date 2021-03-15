@@ -92,7 +92,7 @@ let codeFileRegex = /\.(?:js|go)$/;
 let regexStart = /\/\*{2}/;
 let regexEnd = /\*\//;
 let definitionRegex = /\@apiDefine\s{1,}(\w{1,})/;
-let modelDefinitionRegex = /\@apiModel\s{1,}(\w{1,})/;
+let modelDefinitionRegex = /\@apiModel\s{1,}([\w]{1,})/;
 let routeRegex = /\@api\s\{(\w{1,})\}\s{1,}([\w\/\:\-]{1,})\s{1,}([\w\s]{1,}\w)/;
 let paramRegex = /\@apiParam\s(\(\w{1,}\)\s)?\{([^\s]{1,})\}\s\[?([\w\.]{1,}(?:\[\])?)(?:[\d\.\{\}]{1,})?\=?\w{0,}\]?\s?([^\n]{0,})/;
 let headerRegex = /\@apiHeader\s(\(\w{1,}\)\s)?\{([^\s]{1,})\}\s([\w\[\]]{1,})\=?\w{0,}\s?([^\n\*]{0,})/;
@@ -100,12 +100,12 @@ let typeRegex = /\{([#\w]{1,})((?:\[\])?)(?:\{([^}]{1,})\})?\=?(?:([^}]{1,}))?\}
 let apiNameRegex = /\@apiName\s(\w*)/;
 let apiGroupRegex = /\@apiGroup\s(\w*)/;
 let apiUseRegex = /\@apiUse\s(\w*)/;
-let apiBodyRegex = /\@apiBody\s([\w]*)\s([#\w]*)/;
+let apiBodyRegex = /\@apiBody\s([\w]*)\s([\#\w\[\]]*)/;
 let apiDescribeRegex = /\@apiDescribe\s([\w]*)/;
 let apiDescriptionRegex = /\@apiDescription\s([#\w]*)/;
 let apiConsumesRegex = /\@apiConsumes\s([\w/]*)/;
 let apiProducesRegex = /\@apiProduces\s([\w/]*)/;
-let apiResponseRegex = /\@apiResponse\s([\w]*)\s([#\w]*)\s([\w]*)/;
+let apiResponseRegex = /\@apiResponse\s([\w]*)\s([\#\w\[\]]*)\s([\w]*)/;
 
 /**
  * 
@@ -178,30 +178,42 @@ let getProduces = (arr) => {
   return params.length > 0 ? params : ['application/json'];
 }
 
-let getResponses = (arr) => {
+let getResponses = (arr, definitions) => {
   let params = [];
   arr.forEach((line) => {
     if (apiResponseRegex.test(line)) {
       let parts = apiResponseRegex.exec(line);
-      params.push({
+      let modelName = parts[2].slice(1);
+      const prop = {
         code: parts[1],
-        modelName: parts[2].slice(1),
+        modelName,
         description: parts[3],
-      });
+      };
+      if (modelName.endsWith('[]')) {
+        prop.modelName = modelName.slice(0, modelName.length - 2) + 'List';
+        definitions[prop.modelName] = { _isArray: true, ref: modelName.slice(0, modelName.length - 2) };
+      }
+      params.push(prop);
     }
   });
   return params;
 }
 
-let getBody = (arr) => {
+let getBody = (arr, definitions) => {
   let param = [];
   arr.forEach((line) => {
     if (apiBodyRegex.test(line)) {
       let parts = apiBodyRegex.exec(line);
-      param.push({
+      let model = parts[2].slice(1);
+      const prop = {
         name: parts[1],
-        model: parts[2].slice(1)
-      });
+        model: parts[2].slice(1),
+      };
+      if (model.endsWith('[]')) {
+        prop.model = model.slice(0, model.length - 2) + 'List';
+        definitions[prop.model] = { _isArray: true, ref: model.slice(0, model.length - 2) };
+      }
+      param.push(prop);
     }
   });
   return param;
@@ -321,16 +333,16 @@ let processRoutes = (arr, routes, definitions, descriptions) => {
     let params2 = getParams(arr.slice(1));
     let consumes = getConsumes(arr.slice(1));
     let produces = getProduces(arr.slice(1));
-    let responses = getResponses(arr.slice(1));
-    let body = getBody(arr.slice(1));
-    let description = getDescription(arr.slice(1));
+    let responses = getResponses(arr.slice(1), definitions);
+    let body = getBody(arr.slice(1), definitions);
+    let description = flattenDeep(map(getDescription(arr.slice(1)), (d) => descriptions[d]));
     params = { ...params1, ...params2 };
     routes[`${toLower(method)};${path}`] = {
       controller: last(arr),
       method: camelCase(name),
       tag: group,
       summary,
-      description: flattenDeep(map(description, (d) => descriptions[d])),
+      description: description.length === 0 ? ['no description yet'] : description,
       routeParams: getRouteParamList(path),
       params,
       body,
@@ -404,20 +416,26 @@ let generateDocDefinitions = (models) => {
   let result = ['definitions:'];
   forEach(models, (modelProps, modelName) => {
     result.push(`  ${modelName}:`);
-    result.push(`    type: object`);
-    let required = keys(pickBy(modelProps, (value) => !value.optional));
-    if (required.length > 0) {
-      result.push(`    required:`);
-      forEach(required, (name) => {
-        result.push(`      - ${name}`);
+    if (modelProps._isArray) {
+      result.push(`    type: array`);
+      result.push(`    items:`);
+      result.push(`      $ref: "#/definitions/${modelProps.ref}"`);
+    } else {
+      result.push(`    type: object`);
+      let required = keys(pickBy(modelProps, (value) => !value.optional));
+      if (required.length > 0) {
+        result.push(`    required:`);
+        forEach(required, (name) => {
+          result.push(`      - ${name}`);
+        });
+      }
+      result.push(`    properties:`);
+      forEach(modelProps, (data, name) => {
+        result.push(`      ${name}:`);
+        result.push(generateDocType(data, 8));
       });
+      if (last(result).match('properties:')) result.pop();
     }
-    result.push(`    properties:`);
-    forEach(modelProps, (data, name) => {
-      result.push(`      ${name}:`);
-      result.push(generateDocType(data, 8));
-    });
-    if (last(result).match('properties:')) result.pop();
   });
   return `\n${result.join('\n')}`;
 }
