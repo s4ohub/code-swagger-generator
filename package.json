@@ -1,0 +1,25 @@
+{
+  "name": "code-swagger-generator",
+  "version": "1.0.0",
+  "description": "a script to generate swagger.yml doc",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://sourcecontrol4obi@bitbucket.org/sourcecontrol4obi/code-swagger-generator.git"
+  },
+  "author": "obi ubaka",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/sourcecontrol4obi/code-swagger-generator#readme",
+  "dependencies": {
+    "lodash": "^4.17.11",
+    "pluralize": "^7.0.0",
+    "url-parse": "^1.4.4"
+  },
+  "bin": {
+    "s4o-swagger-generator": "./bin/global.js"
+  },
+  "preferGlobal": true
+}
