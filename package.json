@@ -19,7 +19,7 @@
     "url-parse": "^1.4.4"
   },
   "bin": {
-    "s4o-swagger-generator": "./bin/global.js"
+    "code-swagger-generator": "./bin/global.js"
   },
   "preferGlobal": true
 }
