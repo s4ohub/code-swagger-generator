@@ -1,6 +1,6 @@
 ### installation
 ```
-npm i -g git+https://sourcecontrol4obi@bitbucket.org/sourcecontrol4obi/code-swagger-generator.git
+npm i -g code-swagger-generator
 ```
 
 ### usage
