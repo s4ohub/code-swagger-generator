@@ -137,7 +137,7 @@ let getRange = (data) => {
 
 let getType = (data) => {
   let parts = typeRegex.exec(`{${data}}`);
-  if (!parts[2] && !parts[3]) return firstUpCase(parts[1]);
+  if (!parts[2] && !parts[3] && !parts[4]) return firstUpCase(parts[1]);
   if (parts[2] && parts[2] === '[]') {
     return {
       type: 'Array',
@@ -151,7 +151,7 @@ let getType = (data) => {
     result['range'] = getRange(parts[2]);
   }
   if (parts[4]) {
-    result['enum'] = parts[3].replace(/[\'\"]/g, '').split(',');
+    result['enum'] = parts[4].replace(/[\'\"]/g, '').split(',');
   }
   return result;
 }
@@ -371,24 +371,29 @@ let generateDocType = (type, spacing) => {
       // process references
       result.push(`$ref: "#/definitions/${type.type.slice(1)}"`);
     } else {
+      let typeName;
+      let typeData;
       // process type
       if (typeof type.type === 'object') {
-        result.push(`type: ${lowerCase(type.type.type)}`);
+        typeName = type.type.type;
+        typeData = type.type;
       } else {
-        result.push(`type: ${lowerCase(type.type)}`);
+        typeName = type.type;
+        typeData = type;
       }
+      result.push(`type: ${lowerCase(typeName)}`);
       // process enums
-      if (type.enum) {
-        result.push(`enum: ${JSON.stringify(type.enum)}`);
+      if (typeData.enum) {
+        result.push(`enum: ${JSON.stringify(typeData.enum)}`);
       }
       // process arrays
-      if (type.items || (type.type && type.type.items)) {
+      if (typeData.items) {
         result.push('items:');
         let items;
-        if (typeof type.type === 'object') {
-          items = type.type.items;
+        if (typeof typeData.type === 'object') {
+          items = typeData.type.items;
         } else {
-          items = type.items;
+          items = typeData.items;
         }
         if (items.startsWith('#')) {
           result.push(`  $ref: "#/definitions/${items.slice(1)}"`);
@@ -397,14 +402,14 @@ let generateDocType = (type, spacing) => {
         }
       }
       // process ranges
-      if (type.range) {
-        forEach(type.range, (v, k) => {
+      if (typeData.range) {
+        forEach(typeData.range, (v, k) => {
           result.push(`${k}: ${v}`);
         });
       }
       // process descriptions
-      if (type.description) {
-        result.push(`description: '${escape(type.description)}'`);
+      if (typeData.description) {
+        result.push(`description: '${escape(typeData.description)}'`);
       }
     }
   }
