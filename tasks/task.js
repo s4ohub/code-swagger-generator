@@ -94,7 +94,7 @@ let regexEnd = /\*\//;
 let definitionRegex = /\@apiDefine\s{1,}(\w{1,})/;
 let modelDefinitionRegex = /\@apiModel\s{1,}([\w]{1,})/;
 let routeRegex = /\@api\s\{(\w{1,})\}\s{1,}([\w\/\:\-]{1,})\s{1,}([\w\s]{1,}\w)/;
-let paramRegex = /\@apiParam\s(\(\w{1,}\)\s)?\{([^\s]{1,})\}\s\[?([\w\.]{1,}(?:\[\])?)(?:[\d\.\{\}]{1,})?\=?\w{0,}\]?\s?([^\n]{0,})/;
+let paramRegex = /(?:\@apiParam|\@apiSuccess)\s(\(\w{1,}\)\s)?\{([^\s]{1,})\}\s\[?([\w\.]{1,}(?:\[\])?)(?:[\d\.\{\}]{1,})?\=?\w{0,}\]?\s?([^\n]{0,})/;
 let headerRegex = /\@apiHeader\s(\(\w{1,}\)\s)?\{([^\s]{1,})\}\s([\w\[\]]{1,})\=?\w{0,}\s?([^\n\*]{0,})/;
 let typeRegex = /\{([#\w]{1,})((?:\[\])?)(?:\{([^}]{1,})\})?\=?(?:([^}]{1,}))?\}/;
 let apiNameRegex = /\@apiName\s(\w*)/;
