@@ -233,10 +233,13 @@ let getDescription = (arr) => {
 let getParams = (arr) => {
   let params = {};
   arr.forEach((line) => {
-    let regex;
+    let regex;    
     const isParam = paramRegex.test(line);
     const isHeader = headerRegex.test(line);
     if (isParam) regex = paramRegex;
+    if (isParam) {
+      console.log('line =>', line);
+    }
     if (isHeader) regex = headerRegex;
     if ((isParam || isHeader) && line.indexOf('.') < 0) {
       let parts = regex.exec(line);
@@ -336,9 +339,10 @@ let processRoutes = (arr, routes, definitions, descriptions) => {
     let responses = getResponses(arr.slice(1), definitions);
     let body = getBody(arr.slice(1), definitions);
     let description = flattenDeep(map(getDescription(arr.slice(1)), (d) => descriptions[d]));
+    let controller = last(last(arr).split('/')).split('.')[0];
     params = { ...params1, ...params2 };
     routes[`${toLower(method)};${path}`] = {
-      controller: last(arr),
+      controller,
       method: camelCase(name),
       tag: group,
       summary,
