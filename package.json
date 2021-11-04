@@ -1,6 +1,6 @@
 {
   "name": "code-swagger-generator",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "a script to generate swagger.yml doc",
   "main": "index.js",
   "scripts": {
