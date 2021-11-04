@@ -88,7 +88,7 @@ let responseDefinitionTemplate = template(responseDefinition);
 let genericResponseDefinitionTemplate = template(genericResponseDefinition);
 
 // regular expressions
-let codeFileRegex = /\.(?:js|go)$/;
+let codeFileRegex = /\.(?:js|go|ts)$/;
 let regexStart = /\/\*{2}/;
 let regexEnd = /\*\//;
 let definitionRegex = /\@apiDefine\s{1,}(\w{1,})/;
